@@ -4,7 +4,7 @@ import type { ImportTab } from '../types';
 interface DialogsProps {
   openImport: boolean;
   onCloseImport: () => void;
-  onImportText: (text: string, name: string) => void;
+  onImportFile: (file: File) => Promise<void>;
   onImportError: (message: string) => void;
   onLoadTemplate: (template: 'resume' | 'meeting' | 'blank') => void;
   openFind: boolean;
@@ -43,9 +43,7 @@ export default function Dialogs(props: DialogsProps) {
     if (!file) return;
     setImporting(true);
     try {
-      const { importDocumentFile } = await import('../utils/importDocument');
-      const html = await importDocumentFile(file);
-      props.onImportText(html, file.name);
+      await props.onImportFile(file);
     } catch (error) {
       props.onImportError(error instanceof Error ? error.message : 'The selected file could not be imported.');
     } finally {
@@ -83,6 +81,7 @@ export default function Dialogs(props: DialogsProps) {
               <i className={`fa-solid ${importing ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`} />
               <strong>{importing ? 'Importing document...' : 'Choose a document or drag it here'}</strong>
               <span>PDF, DOCX, TXT, Markdown, HTML, RTF, CSV, JSON, XML, and LOG</span>
+              <small>DOCX imports preserve page layout, styles, and embedded images as closely as browser rendering allows.</small>
               <input type="file" accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.rtf,.csv,.json,.xml,.log" disabled={importing} onChange={handleFileSelect} />
             </label>}
             {tab === 'url' && <div className="url-import"><p>Paste a public webpage or Google Docs URL.</p><input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" /><button className="primary-small" onClick={() => { if (url.trim()) { window.alert('URL import is not connected yet.'); } }}>Import URL</button><small>External URL importing requires a connected service.</small></div>}

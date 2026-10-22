@@ -1,5 +1,4 @@
 import DOMPurify from 'dompurify';
-import mammoth from 'mammoth';
 import { marked } from 'marked';
 
 const supportedFormats = 'PDF, DOCX, TXT, Markdown, HTML, RTF, CSV, JSON, XML, and LOG';
@@ -166,12 +165,6 @@ export async function importDocumentFile(file: File): Promise<string> {
 
   if (extension === 'pdf' || file.type === 'application/pdf') {
     html = await pdfToHtml(file);
-  } else if (extension === 'docx' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    const result = await mammoth.convertToHtml(
-      { arrayBuffer: await file.arrayBuffer() },
-      { convertImage: mammoth.images.dataUri },
-    );
-    html = result.value;
   } else if (extension === 'md' || extension === 'markdown') {
     html = await marked.parse(await file.text());
   } else if (extension === 'html' || extension === 'htm' || file.type === 'text/html') {

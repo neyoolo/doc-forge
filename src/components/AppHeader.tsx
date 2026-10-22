@@ -6,6 +6,7 @@ interface AppHeaderProps {
   onOpenImport: () => void;
   onOpenFind: () => void;
   onOpenSettings: () => void;
+  onClearCanvas: () => void;
   onExport: (format: 'docx' | 'pdf' | 'html' | 'markdown') => void;
 }
 
@@ -17,6 +18,7 @@ export default function AppHeader({
   onOpenImport,
   onOpenFind,
   onOpenSettings,
+  onClearCanvas,
   onExport,
 }: AppHeaderProps) {
   const exports = [
@@ -44,6 +46,7 @@ export default function AppHeader({
       <nav className="header-actions" aria-label="Document actions">
         <button className="header-button" onClick={onOpenImport}><i className="fa-solid fa-folder-open" /> Open / Import</button>
         <button className="header-button" onClick={onOpenFind}><i className="fa-solid fa-magnifying-glass" /> Find & Replace <span className="shortcut-hint">Ctrl+F</span></button>
+        <button className="header-button clear-canvas-button" title="Clear canvas" aria-label="Clear canvas" onClick={onClearCanvas}><i className="fa-regular fa-trash-can" /> Clear canvas</button>
         <button className="header-icon-button" onClick={onOpenSettings} title="AI Settings" aria-label="AI Settings"><i className="fa-solid fa-gear" /></button>
         <span className="header-divider" />
         <div className="export-wrap">

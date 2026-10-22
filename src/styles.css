@@ -94,24 +94,35 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .paper-scale { transform-origin: top center; transition: transform .16s ease; flex: 0 0 auto; }
 .paper { width: 816px; min-height: 1056px; padding: 64px; background: white; color: #0f172a; box-shadow: 0 12px 35px #0f172a20; }
 .editor-content { min-height: 925px; outline: none; font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
-.editor-content p { margin: 0 0 .85em; }
-.editor-content h1 { margin: 1.2em 0 .5em; color: #0f172a; font-size: 2.1rem; font-weight: 700; line-height: 1.2; }
-.editor-content h1:first-child { margin-top: 0; }
-.editor-content h2 { margin: 1em 0 .4em; padding-bottom: .25rem; color: #1e293b; border-bottom: 1px solid #e2e8f0; font-size: 1.6rem; font-weight: 600; }
-.editor-content h3 { margin: .8em 0 .3em; color: #334155; font-size: 1.25rem; font-weight: 600; }
-.editor-content ul, .editor-content ol { margin: 0 0 .85em; padding-left: 1.5rem; }
-.editor-content ul { list-style: disc; }
-.editor-content ol { list-style: decimal; }
-.editor-content blockquote { margin: 1em 0; padding: .6rem 1rem; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; background: #f8fafc; color: #475569; font-style: italic; }
-.editor-content table { width: 100%; margin: 1.2em 0; border-collapse: collapse; }
-.editor-content th, .editor-content td { padding: .5rem .75rem; border: 1px solid #cbd5e1; text-align: left; }
-.editor-content th { background: #f1f5f9; font-weight: 600; }
-.editor-content img { display: block; max-width: 100%; height: auto; margin: .75em auto; border-radius: 6px; }
-.editor-content hr { height: 1px; margin: 1.5em 0; border: 0; background: #cbd5e1; }
+.editor-content:not(.docx-content) p { margin: 0 0 .85em; }
+.editor-content:not(.docx-content) h1 { margin: 1.2em 0 .5em; color: #0f172a; font-size: 2.1rem; font-weight: 700; line-height: 1.2; }
+.editor-content:not(.docx-content) h1:first-child { margin-top: 0; }
+.editor-content:not(.docx-content) h2 { margin: 1em 0 .4em; padding-bottom: .25rem; color: #1e293b; border-bottom: 1px solid #e2e8f0; font-size: 1.6rem; font-weight: 600; }
+.editor-content:not(.docx-content) h3 { margin: .8em 0 .3em; color: #334155; font-size: 1.25rem; font-weight: 600; }
+.editor-content:not(.docx-content) ul, .editor-content:not(.docx-content) ol { margin: 0 0 .85em; padding-left: 1.5rem; }
+.editor-content:not(.docx-content) ul { list-style: disc; }
+.editor-content:not(.docx-content) ol { list-style: decimal; }
+.editor-content:not(.docx-content) blockquote { margin: 1em 0; padding: .6rem 1rem; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; background: #f8fafc; color: #475569; font-style: italic; }
+.editor-content:not(.docx-content) table { width: 100%; margin: 1.2em 0; border-collapse: collapse; }
+.editor-content:not(.docx-content) th, .editor-content:not(.docx-content) td { padding: .5rem .75rem; border: 1px solid #cbd5e1; text-align: left; }
+.editor-content:not(.docx-content) th { background: #f1f5f9; font-weight: 600; }
+.editor-content:not(.docx-content) img { display: block; max-width: 100%; height: auto; margin: .75em auto; border-radius: 6px; }
+.editor-content:not(.docx-content) hr { height: 1px; margin: 1.5em 0; border: 0; background: #cbd5e1; }
+.docx-style-host { display: none; }
+.editor-content.docx-content { min-height: 0; width: 100%; overflow: visible; overflow-wrap: normal; font-family: initial; font-size: initial; line-height: normal; }
+.paper.docx-paper { width: auto; min-height: 0; padding: 0; background: transparent; box-shadow: none; }
+.docx-content .docx-wrapper { margin: 0; }
+.clear-canvas-button { color: #fecaca; }
+.clear-canvas-button i { color: #fca5a5; }
+.clear-canvas-button:hover { color: white; background: #7f1d1d; border-color: #991b1b; }
 .page-break { position: relative; margin: 2rem 0; border-top: 2px dashed #94a3b8; text-align: center; }
 .page-break::before { position: absolute; top: -9px; left: 50%; padding: 0 8px; transform: translateX(-50%); background: #fff; color: #64748b; content: "PAGE BREAK"; font-size: 9px; font-weight: 700; letter-spacing: .05em; }
 .status-bar { z-index: 3; display: flex; flex: 0 0 42px; justify-content: space-between; align-items: center; gap: 16px; padding: 0 21px; background: #f8fafc; border-top: 1px solid #dbe2eb; color: #64748b; font-size: 10px; }
 .status-stats, .status-tools, .quota-chip, .zoom-control { display: flex; align-items: center; gap: 10px; }
+.save-indicator { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.save-saved { color: #15803d; }
+.save-saving, .save-loading { color: #64748b; }
+.save-error { color: #dc2626; }
 .status-separator { color: #cbd5e1; }
 .quota-chip { gap: 9px; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 5px; background: white; font-size: 9px; }
 .quota-chip .fa-arrow-right-arrow-left { color: #2563eb; }
@@ -155,6 +166,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .upload-drop > i { color: #2563eb; font-size: 28px; }
 .upload-drop strong { color: #1e293b; font-size: 12px; }
 .upload-drop span { color: #94a3b8; font-size: 10px; }
+.upload-drop small { max-width: 360px; color: #64748b; font-size: 9px; line-height: 1.5; }
 .upload-drop input { width: 190px; font-size: 9px; }
 .url-import { display: flex; flex-direction: column; gap: 9px; }
 .url-import p { margin: 0; }
@@ -204,6 +216,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .app-header { gap: 10px; padding: 8px 12px; }
   .header-actions { gap: 5px; }
   .header-button { padding: 0 8px; font-size: 10px; }
+  .header-actions .header-button.clear-canvas-button { display: inline-flex; }
   .shortcut-hint { display: none; }
   .document-title { width: 140px; }
   .status-bar { padding: 0 12px; }
@@ -213,6 +226,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (max-width: 680px) {
   .app-shell { min-width: 360px; }
   .edition-badge, .brand-area > .header-divider, .header-button span, .header-button:not(:first-child) { display: none; }
+  .header-actions .header-button.clear-canvas-button { display: inline-flex; }
   .document-title { min-width: 90px; width: 125px; }
   .header-actions { gap: 5px; }
   .header-button { width: 32px; overflow: hidden; padding: 0; font-size: 0; }
@@ -234,4 +248,5 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .paper-scale { display: block !important; transform: none !important; }
   .paper { width: auto; min-height: 0; padding: 0; box-shadow: none; }
   .editor-content { min-height: 0; }
+  .paper.docx-paper { width: auto; }
 }

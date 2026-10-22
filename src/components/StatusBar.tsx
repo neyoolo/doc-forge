@@ -4,13 +4,16 @@ interface StatusBarProps {
   stats: EditorStats;
   zoom: number;
   aiQuota: number;
+  saveStatus: 'loading' | 'saving' | 'saved' | 'error';
   onZoomChange: (zoom: number) => void;
 }
 
-export default function StatusBar({ stats, zoom, aiQuota, onZoomChange }: StatusBarProps) {
+export default function StatusBar({ stats, zoom, aiQuota, saveStatus, onZoomChange }: StatusBarProps) {
   return (
     <footer className="status-bar no-print">
       <div className="status-stats">
+        <span className={`save-indicator save-${saveStatus}`}><i className={`fa-solid ${saveStatus === 'saving' ? 'fa-rotate fa-spin' : saveStatus === 'error' ? 'fa-circle-exclamation' : 'fa-cloud-check'}`} /> {saveStatus === 'loading' ? 'Loading…' : saveStatus === 'saving' ? 'Saving…' : saveStatus === 'error' ? 'Save error' : 'Saved locally'}</span>
+        <span className="status-separator">|</span>
         <span>{stats.words.toLocaleString()} words</span><span className="status-separator">|</span>
         <span>{stats.characters.toLocaleString()} characters</span><span className="status-separator">|</span>
         <span>{stats.readingMinutes} min read</span>

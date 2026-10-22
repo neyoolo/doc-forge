@@ -5,6 +5,7 @@ import EditorCanvas from './components/EditorCanvas';
 import StatusBar from './components/StatusBar';
 import Toolbar from './components/Toolbar';
 import type { AiTask, EditorStats, ToastMessage, ToastKind } from './types';
+import { loadSavedDocument, saveDocument } from './utils/documentStorage';
 
 const resumeTemplate = `<h1>Jane Doe</h1><p><strong>Email:</strong> jane.doe@example.com | <strong>Phone:</strong> (555) 019-2831</p><h2>Professional Experience</h2><h3>Senior Software Engineer — TechCorp</h3><p><em>2021 – Present</em></p><ul><li>Led a team of 6 engineers building web productivity applications.</li><li>Optimized browser performance reducing load time by 40%.</li></ul>`;
 const meetingTemplate = `<h1>Weekly Engineering Sync</h1><p><strong>Date:</strong> October 24, 2026</p><h2>Attendees</h2><p>Jane, Alex, Rahul, Sarah</p><h2>Agenda Items</h2><ol><li>Sprint review and release readiness</li><li>Cloud storage R2 integration pipeline</li></ol>`;
@@ -50,8 +51,14 @@ function downloadFile(filename: string, content: BlobPart, mime: string) {
 
 export default function App() {
   const editorRef = useRef<HTMLDivElement>(null);
+  const docxStylesRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const saveTimerRef = useRef<number | undefined>(undefined);
+  const isDocxRef = useRef(false);
   const [title, setTitle] = useState('Untitled Document.docx');
+  const [isDocx, setIsDocx] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'loading' | 'saving' | 'saved' | 'error'>('loading');
   const [stats, setStats] = useState<EditorStats>({ words: 0, characters: 0, readingMinutes: 1 });
   const [zoom, setZoom] = useState(100);
   const [exportOpen, setExportOpen] = useState(false);
@@ -76,9 +83,77 @@ export default function App() {
     window.setTimeout(() => setToasts((current) => current.filter((toast) => toast.id !== id)), 3200);
   }, []);
 
+  const scheduleSave = useCallback(() => {
+    const editor = editorRef.current;
+    if (!storageReady || !editor) return;
+    window.clearTimeout(saveTimerRef.current);
+    setSaveStatus('saving');
+    saveTimerRef.current = window.setTimeout(() => {
+      void saveDocument({
+        title,
+        html: editor.innerHTML,
+        docxStyles: docxStylesRef.current?.innerHTML ?? '',
+        isDocx: isDocxRef.current,
+      }).then(() => {
+        setSaveStatus('saved');
+      }).catch((error: unknown) => {
+        setSaveStatus('error');
+        notify(error instanceof Error ? `Could not save locally: ${error.message}` : 'Could not save the document locally.', 'error');
+      });
+    }, 500);
+  }, [notify, storageReady, title]);
+
   const refreshStats = useCallback(() => {
     setStats(makeStats(editorRef.current?.innerText ?? ''));
-  }, []);
+    scheduleSave();
+  }, [scheduleSave]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadSavedDocument().then((saved) => {
+      if (cancelled) return;
+      if (saved && editorRef.current) {
+        editorRef.current.innerHTML = saved.html;
+        if (docxStylesRef.current) docxStylesRef.current.innerHTML = saved.docxStyles;
+        setTitle(saved.title);
+        isDocxRef.current = saved.isDocx;
+        setIsDocx(saved.isDocx);
+      }
+      setStats(makeStats(editorRef.current?.innerText ?? ''));
+      setStorageReady(true);
+      setSaveStatus('saved');
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      setStorageReady(true);
+      setSaveStatus('error');
+      notify(error instanceof Error ? `Local document storage is unavailable: ${error.message}` : 'Local document storage is unavailable.', 'error');
+    });
+    return () => { cancelled = true; };
+  }, [notify]);
+
+  useEffect(() => () => window.clearTimeout(saveTimerRef.current), []);
+
+  useEffect(() => {
+    const saveOnPageHide = () => {
+      const editor = editorRef.current;
+      if (!storageReady || !editor) return;
+      window.clearTimeout(saveTimerRef.current);
+      void saveDocument({
+        title,
+        html: editor.innerHTML,
+        docxStyles: docxStylesRef.current?.innerHTML ?? '',
+        isDocx: isDocxRef.current,
+      }).catch((error: unknown) => {
+        console.error('Could not save the document before leaving the page.', error);
+      });
+    };
+    window.addEventListener('pagehide', saveOnPageHide);
+    return () => window.removeEventListener('pagehide', saveOnPageHide);
+  }, [storageReady, title]);
+
+  useEffect(() => {
+    if (storageReady) scheduleSave();
+  }, [title, storageReady, scheduleSave]);
 
   useEffect(() => {
     refreshStats();
@@ -112,6 +187,7 @@ export default function App() {
   const applyFormatBlock = (tag: string) => {
     editorRef.current?.focus();
     document.execCommand('formatBlock', false, `<${tag}>`);
+    refreshStats();
   };
 
   const insertContent = (kind: 'checklist' | 'link' | 'image' | 'table' | 'page-break') => {
@@ -197,19 +273,50 @@ export default function App() {
     notify(count ? `${all ? 'Replaced all' : 'Replaced'} ${count === 1 ? 'match' : `${count} matches`}` : 'No matching text found', count ? 'success' : 'info');
   };
 
-  const importText = (text: string, filename: string) => {
-    if (editorRef.current) editorRef.current.innerHTML = text;
-    setTitle(filename);
+  const importFile = async (file: File) => {
+    const isWordDocument = file.name.toLowerCase().endsWith('.docx')
+      || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    if (isWordDocument) {
+      if (!editorRef.current || !docxStylesRef.current) throw new Error('The document editor is not ready.');
+      const { renderDocxFile } = await import('./utils/renderDocx');
+      await renderDocxFile(file, editorRef.current, docxStylesRef.current);
+      isDocxRef.current = true;
+      setIsDocx(true);
+    } else {
+      const { importDocumentFile } = await import('./utils/importDocument');
+      const html = await importDocumentFile(file);
+      if (editorRef.current) editorRef.current.innerHTML = html;
+      docxStylesRef.current?.replaceChildren();
+      isDocxRef.current = false;
+      setIsDocx(false);
+    }
+    setTitle(file.name);
     setOpenImport(false);
     refreshStats();
-    notify(`Imported ${filename}`, 'success');
+    notify(`Imported ${file.name}`, 'success');
   };
 
   const loadTemplate = (template: 'resume' | 'meeting' | 'blank') => {
     if (editorRef.current) editorRef.current.innerHTML = template === 'resume' ? resumeTemplate : template === 'meeting' ? meetingTemplate : '<p><br></p>';
+    docxStylesRef.current?.replaceChildren();
+    isDocxRef.current = false;
+    setIsDocx(false);
     setOpenImport(false);
     refreshStats();
     notify('Template loaded', 'success');
+  };
+
+  const clearCanvas = () => {
+    if (!window.confirm('Clear the current document? Its contents will be replaced with a blank canvas.')) return;
+    window.clearTimeout(saveTimerRef.current);
+    if (editorRef.current) editorRef.current.innerHTML = '<p><br></p>';
+    docxStylesRef.current?.replaceChildren();
+    isDocxRef.current = false;
+    setIsDocx(false);
+    setTitle('Untitled Document.docx');
+    refreshStats();
+    notify('Canvas cleared. The blank document will be saved locally.', 'success');
   };
 
   const exportDocument = (format: 'docx' | 'pdf' | 'html' | 'markdown') => {
@@ -241,6 +348,7 @@ export default function App() {
         onOpenImport={() => setOpenImport(true)}
         onOpenFind={() => setOpenFind((open) => !open)}
         onOpenSettings={() => setOpenSettings(true)}
+        onClearCanvas={clearCanvas}
         onExport={exportDocument}
       />
       <Toolbar
@@ -252,12 +360,12 @@ export default function App() {
         onToggleAi={() => setAiOpen((open) => !open)}
         onCustomAi={() => { setAiOpen(false); setCustomPromptOpen(true); }}
       />
-      <EditorCanvas ref={editorRef} zoom={zoom} onInput={refreshStats} onImageSelect={onImageSelect} />
-      <StatusBar stats={stats} zoom={zoom} aiQuota={aiQuota} onZoomChange={setZoom} />
+      <EditorCanvas ref={editorRef} docxStylesRef={docxStylesRef} isDocx={isDocx} isReady={storageReady} zoom={zoom} onInput={refreshStats} onImageSelect={onImageSelect} />
+      <StatusBar stats={stats} zoom={zoom} aiQuota={aiQuota} saveStatus={saveStatus} onZoomChange={setZoom} />
       <Dialogs
         openImport={openImport}
         onCloseImport={() => setOpenImport(false)}
-        onImportText={importText}
+        onImportFile={importFile}
         onImportError={(message) => notify(message, 'error')}
         onLoadTemplate={loadTemplate}
         openFind={openFind}
