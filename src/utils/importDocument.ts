@@ -106,6 +106,22 @@ function rtfToText(rtf: string): string {
     }
     index += control[0].length;
     const word = control[1].toLowerCase();
+    if (groupStart && [
+      'colortbl',
+      'datastore',
+      'fonttbl',
+      'generator',
+      'info',
+      'listoverridetable',
+      'listtable',
+      'object',
+      'pict',
+      'stylesheet',
+      'xmlnstbl',
+    ].includes(word)) {
+      skipGroupAtDepth = depth;
+      continue;
+    }
     if (skipGroupAtDepth !== null) continue;
     if (word === 'par' || word === 'line') output += '\n';
     else if (word === 'tab') output += '\t';
