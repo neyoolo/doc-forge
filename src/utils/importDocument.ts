@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
+import { ensurePromiseWithResolvers } from './promiseCompatibility';
 
 const supportedFormats = 'PDF, DOCX, TXT, Markdown, HTML, RTF, CSV, JSON, XML, and LOG';
 
@@ -135,6 +136,7 @@ function rtfToText(rtf: string): string {
 }
 
 async function pdfToHtml(file: File): Promise<string> {
+  ensurePromiseWithResolvers();
   const pdfjs = await import('pdfjs-dist');
   const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
