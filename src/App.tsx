@@ -198,7 +198,7 @@ export default function App() {
   };
 
   const importText = (text: string, filename: string) => {
-    if (editorRef.current) editorRef.current.innerText = text;
+    if (editorRef.current) editorRef.current.innerHTML = text;
     setTitle(filename);
     setOpenImport(false);
     refreshStats();
@@ -258,6 +258,7 @@ export default function App() {
         openImport={openImport}
         onCloseImport={() => setOpenImport(false)}
         onImportText={importText}
+        onImportError={(message) => notify(message, 'error')}
         onLoadTemplate={loadTemplate}
         openFind={openFind}
         onCloseFind={() => setOpenFind(false)}

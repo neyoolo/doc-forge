@@ -5,6 +5,7 @@ interface DialogsProps {
   openImport: boolean;
   onCloseImport: () => void;
   onImportText: (text: string, name: string) => void;
+  onImportError: (message: string) => void;
   onLoadTemplate: (template: 'resume' | 'meeting' | 'blank') => void;
   openFind: boolean;
   onCloseFind: () => void;
@@ -37,14 +38,24 @@ export default function Dialogs(props: DialogsProps) {
   const [tab, setTab] = useState<ImportTab>('upload');
   const [url, setUrl] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
-  const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const [importing, setImporting] = useState(false);
+  const handleImport = async (file?: File) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => props.onImportText(String(reader.result ?? ''), file.name);
-    reader.onerror = () => window.alert('Could not read this file.');
-    reader.readAsText(file);
+    setImporting(true);
+    try {
+      const { importDocumentFile } = await import('../utils/importDocument');
+      const html = await importDocumentFile(file);
+      props.onImportText(html, file.name);
+    } catch (error) {
+      props.onImportError(error instanceof Error ? error.message : 'The selected file could not be imported.');
+    } finally {
+      setImporting(false);
+    }
+  };
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     event.currentTarget.value = '';
+    void handleImport(file);
   };
 
   return (
@@ -61,7 +72,19 @@ export default function Dialogs(props: DialogsProps) {
           <div className="modal-header"><h2><i className="fa-solid fa-folder-open" /> Open document / Import</h2><button className="icon-button light" onClick={props.onCloseImport} aria-label="Close import"><i className="fa-solid fa-xmark" /></button></div>
           <div className="tab-strip">{(['upload', 'url', 'templates'] as const).map((item) => <button className={tab === item ? 'selected' : ''} key={item} onClick={() => setTab(item)}>{item === 'upload' ? 'Upload file' : item === 'url' ? 'Google Doc / Web' : 'Templates'}</button>)}</div>
           <div className="modal-body">
-            {tab === 'upload' && <label className="upload-drop"><i className="fa-solid fa-cloud-arrow-up" /><strong>Choose a document to import</strong><span>Supports .html, .txt and .md text files</span><input type="file" accept=".html,.htm,.txt,.md" onChange={handleImport} /></label>}
+            {tab === 'upload' && <label
+              className={`upload-drop ${importing ? 'is-importing' : ''}`}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                void handleImport(event.dataTransfer.files[0]);
+              }}
+            >
+              <i className={`fa-solid ${importing ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`} />
+              <strong>{importing ? 'Importing document...' : 'Choose a document or drag it here'}</strong>
+              <span>PDF, DOCX, TXT, Markdown, HTML, RTF, CSV, JSON, XML, and LOG</span>
+              <input type="file" accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.rtf,.csv,.json,.xml,.log" disabled={importing} onChange={handleFileSelect} />
+            </label>}
             {tab === 'url' && <div className="url-import"><p>Paste a public webpage or Google Docs URL.</p><input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" /><button className="primary-small" onClick={() => { if (url.trim()) { window.alert('URL import is not connected yet.'); } }}>Import URL</button><small>External URL importing requires a connected service.</small></div>}
             {tab === 'templates' && <div className="template-grid"><button onClick={() => props.onLoadTemplate('resume')}><i className="fa-regular fa-file-lines" /><strong>Resume</strong><span>Professional experience layout</span></button><button onClick={() => props.onLoadTemplate('meeting')}><i className="fa-regular fa-calendar" /><strong>Meeting notes</strong><span>Agenda and attendees layout</span></button><button onClick={() => props.onLoadTemplate('blank')}><i className="fa-regular fa-file" /><strong>Blank document</strong><span>Start with a clean page</span></button></div>}
           </div>
