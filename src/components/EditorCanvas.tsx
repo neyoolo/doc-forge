@@ -9,8 +9,7 @@ interface EditorCanvasProps {
   isReady: boolean;
 }
 
-const initialDocument = `<h1>Welcome to Ayoola Doc Forge</h1>
-<p>Select any text above and click <strong>AI Assistant</strong> in the toolbar to see instant inline smart suggestions!</p>`;
+const initialDocument = '<p><br></p>';
 
 function EditorCanvas({ zoom, onInput, onImageSelect, docxStylesRef, isDocx, isReady }: EditorCanvasProps, ref: ForwardedRef<HTMLDivElement>) {
   return (

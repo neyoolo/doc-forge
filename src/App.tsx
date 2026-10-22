@@ -6,6 +6,7 @@ import StatusBar from './components/StatusBar';
 import Toolbar from './components/Toolbar';
 import type { AiTask, EditorStats, ToastMessage, ToastKind } from './types';
 import { loadSavedDocument, saveDocument } from './utils/documentStorage';
+import { paginateDocument } from './utils/paginateDocument';
 
 const resumeTemplate = `<h1>Jane Doe</h1><p><strong>Email:</strong> jane.doe@example.com | <strong>Phone:</strong> (555) 019-2831</p><h2>Professional Experience</h2><h3>Senior Software Engineer — TechCorp</h3><p><em>2021 – Present</em></p><ul><li>Led a team of 6 engineers building web productivity applications.</li><li>Optimized browser performance reducing load time by 40%.</li></ul>`;
 const meetingTemplate = `<h1>Weekly Engineering Sync</h1><p><strong>Date:</strong> October 24, 2026</p><h2>Attendees</h2><p>Jane, Alex, Rahul, Sarah</p><h2>Agenda Items</h2><ol><li>Sprint review and release readiness</li><li>Cloud storage R2 integration pipeline</li></ol>`;
@@ -104,6 +105,7 @@ export default function App() {
   }, [notify, storageReady, title]);
 
   const refreshStats = useCallback(() => {
+    if (editorRef.current && !isDocxRef.current) paginateDocument(editorRef.current);
     setStats(makeStats(editorRef.current?.innerText ?? ''));
     scheduleSave();
   }, [scheduleSave]);
@@ -118,6 +120,9 @@ export default function App() {
         setTitle(saved.title);
         isDocxRef.current = saved.isDocx;
         setIsDocx(saved.isDocx);
+        if (!saved.isDocx) paginateDocument(editorRef.current);
+      } else if (editorRef.current) {
+        paginateDocument(editorRef.current);
       }
       setStats(makeStats(editorRef.current?.innerText ?? ''));
       setStorageReady(true);
@@ -286,10 +291,15 @@ export default function App() {
     } else {
       const { importDocumentFile } = await import('./utils/importDocument');
       const html = await importDocumentFile(file);
-      if (editorRef.current) editorRef.current.innerHTML = html;
+      if (editorRef.current) {
+        editorRef.current.classList.remove('docx-content');
+        editorRef.current.innerHTML = html;
+      }
       docxStylesRef.current?.replaceChildren();
+      document.getElementById('editor-wrapper')?.classList.remove('docx-paper');
       isDocxRef.current = false;
       setIsDocx(false);
+      if (editorRef.current) paginateDocument(editorRef.current);
     }
     setTitle(file.name);
     setOpenImport(false);
@@ -298,10 +308,15 @@ export default function App() {
   };
 
   const loadTemplate = (template: 'resume' | 'meeting' | 'blank') => {
-    if (editorRef.current) editorRef.current.innerHTML = template === 'resume' ? resumeTemplate : template === 'meeting' ? meetingTemplate : '<p><br></p>';
+    if (editorRef.current) {
+      editorRef.current.classList.remove('docx-content');
+      editorRef.current.innerHTML = template === 'resume' ? resumeTemplate : template === 'meeting' ? meetingTemplate : '<p><br></p>';
+    }
     docxStylesRef.current?.replaceChildren();
+    document.getElementById('editor-wrapper')?.classList.remove('docx-paper');
     isDocxRef.current = false;
     setIsDocx(false);
+    if (editorRef.current) paginateDocument(editorRef.current);
     setOpenImport(false);
     refreshStats();
     notify('Template loaded', 'success');
@@ -310,10 +325,15 @@ export default function App() {
   const clearCanvas = () => {
     if (!window.confirm('Clear the current document? Its contents will be replaced with a blank canvas.')) return;
     window.clearTimeout(saveTimerRef.current);
-    if (editorRef.current) editorRef.current.innerHTML = '<p><br></p>';
+    if (editorRef.current) {
+      editorRef.current.classList.remove('docx-content');
+      editorRef.current.innerHTML = '<p><br></p>';
+    }
     docxStylesRef.current?.replaceChildren();
+    document.getElementById('editor-wrapper')?.classList.remove('docx-paper');
     isDocxRef.current = false;
     setIsDocx(false);
+    if (editorRef.current) paginateDocument(editorRef.current);
     setTitle('Untitled Document.docx');
     refreshStats();
     notify('Canvas cleared. The blank document will be saved locally.', 'success');

@@ -92,8 +92,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ai-menu .custom-ai-link { padding: 5px 0 2px; color: #7c3aed; font-size: 10px; }
 .editor-viewport { flex: 1 1 auto; min-height: 0; position: relative; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 32px 28px 50px; background: #e9edf3; }
 .paper-scale { transform-origin: top center; transition: transform .16s ease; flex: 0 0 auto; }
-.paper { width: 816px; min-height: 1056px; padding: 64px; background: white; color: #0f172a; box-shadow: 0 12px 35px #0f172a20; }
-.editor-content { min-height: 925px; outline: none; font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.paper { width: 816px; background: transparent; color: #0f172a; }
+.editor-content { display: flex; flex-direction: column; gap: 24px; width: 816px; min-height: 0; outline: none; font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.document-page { box-sizing: border-box; flex: 0 0 auto; width: 816px; height: 1056px; overflow: hidden; padding: 64px; background: white; color: #0f172a; box-shadow: 0 12px 35px #0f172a20; }
+.document-page > :first-child { margin-top: 0; }
+.document-page > :last-child { margin-bottom: 0; }
+.page-measurement { display: block !important; width: 816px !important; height: auto !important; min-height: 0 !important; padding: 64px !important; box-sizing: border-box !important; overflow: visible !important; }
 .editor-content:not(.docx-content) p { margin: 0 0 .85em; }
 .editor-content:not(.docx-content) h1 { margin: 1.2em 0 .5em; color: #0f172a; font-size: 2.1rem; font-weight: 700; line-height: 1.2; }
 .editor-content:not(.docx-content) h1:first-child { margin-top: 0; }
@@ -109,7 +113,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .editor-content:not(.docx-content) img { display: block; max-width: 100%; height: auto; margin: .75em auto; border-radius: 6px; }
 .editor-content:not(.docx-content) hr { height: 1px; margin: 1.5em 0; border: 0; background: #cbd5e1; }
 .docx-style-host { display: none; }
-.editor-content.docx-content { min-height: 0; width: 100%; overflow: visible; overflow-wrap: normal; font-family: initial; font-size: initial; line-height: normal; }
+.editor-content.docx-content { display: block; min-height: 0; width: 100%; overflow: visible; overflow-wrap: normal; font-family: initial; font-size: initial; line-height: normal; }
 .paper.docx-paper { width: auto; min-height: 0; padding: 0; background: transparent; box-shadow: none; }
 .docx-content .docx-wrapper { margin: 0; }
 .clear-canvas-button { color: #fecaca; }
@@ -221,7 +225,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .document-title { width: 140px; }
   .status-bar { padding: 0 12px; }
   .quota-chip { display: none; }
-  .paper { width: min(816px, 90vw); padding: 48px; }
+  .paper { width: min(816px, 90vw); }
+  .editor-content { width: min(816px, 90vw); }
+  .document-page, .page-measurement { width: min(816px, 90vw) !important; padding: 48px !important; }
 }
 @media (max-width: 680px) {
   .app-shell { min-width: 360px; }
@@ -233,20 +239,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .header-button i { font-size: 12px; }
   .toolbar-row { padding-right: 9px; padding-left: 9px; }
   .editor-viewport { padding: 16px 10px 30px; }
-  .paper { width: 94vw; min-height: 900px; padding: 28px; }
-  .editor-content { min-height: 820px; }
+  .paper { width: 94vw; }
+  .editor-content { width: 94vw; }
+  .document-page, .page-measurement { width: 94vw !important; height: 1056px !important; padding: 64px !important; }
   .status-bar { min-height: 39px; font-size: 9px; }
   .status-stats { gap: 5px; }
   .status-stats span:nth-of-type(4), .status-stats span:nth-of-type(5) { display: none; }
   .zoom-control input { width: 55px; }
 }
+.document-page.page-measurement { height: auto !important; overflow: visible !important; }
 @media print {
   @page { size: letter; margin: .5in; }
   html, body, #root, .app-shell { height: auto; min-width: 0; overflow: visible; background: white; }
   .no-print { display: none !important; }
   .editor-viewport { display: block !important; overflow: visible; padding: 0; background: white; }
   .paper-scale { display: block !important; transform: none !important; }
-  .paper { width: auto; min-height: 0; padding: 0; box-shadow: none; }
-  .editor-content { min-height: 0; }
+  .paper { width: auto; }
+  .editor-content { display: block; width: auto; min-height: 0; }
+  .document-page { width: auto; height: auto; min-height: 0; padding: 0; overflow: visible; box-shadow: none; break-after: page; }
   .paper.docx-paper { width: auto; }
 }
